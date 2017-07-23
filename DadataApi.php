@@ -22,8 +22,9 @@ class DadataApi
                 "method" => "POST",
                 "header" => [
                     "Content-Type: application/json",
+                    "Accept: application/json",
                     "Authorization: Token " . $this->getConfig("apiKey", "Authorization"),
-                    "X-Secret: " . $this->getConfig("secretKey", "Authorization")
+//                    "X-Secret: " . $this->getConfig("secretKey", "Authorization"),
                 ],
                 "content" => ""
             ]
@@ -32,26 +33,32 @@ class DadataApi
 
     public function getAddressInfo($address)
     {
-        $requestData = [
+        /*$requestData = [
             "structure" => [$this->getConfig("address", "URLs")],
             "data" => [[$address]]
+        ];*/
+
+        $requestData = [
+            "query" => $address,
+            "count" => 1
         ];
-        return $this->sendRequest(array_merge($this->defaultRequest, $requestData));
+
+        return $this->sendRequest($this->getConfig("address", "URLs"), array_merge($this->defaultRequest, $requestData));
     }
 
-    protected function sendRequest($requestData)
+    protected function sendRequest($page, $requestData)
     {
 
         $this->defaultOptions["http"]["content"] = json_encode($requestData);
 
         $context = stream_context_create($this->defaultOptions);
 
-        $result = file_get_contents("https://dadata.ru/api/v2/clean", false, $context);
+        $result = file_get_contents($this->getConfig("defaultURL", "URLs") . $page, false, $context);
 
         return json_decode($result);
     }
 
-    protected function getConfig($key = "", $section = "")
+    public function getConfig($key = "", $section = "")
     {
         if (empty($this->config)) {
             $this->config = parse_ini_file("config.ini", true);
